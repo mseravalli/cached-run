@@ -1,10 +1,10 @@
+use atty::Stream;
 use dirs;
 use std::collections::hash_map::DefaultHasher;
 use std::fs::File;
 use std::hash::Hasher;
 use std::io;
 use std::io::Read;
-use std::io::StdinLock;
 use std::io::Write;
 use std::process::Command;
 use std::process::Output;
@@ -76,16 +76,16 @@ fn store_output(process_output: &Output, full_cmd_hash: u64) -> io::Result<()> {
     stdout_chache.write_all(&process_output.stdout)?;
     // stdout_chache.flush()?;
 
-    let stderr = std::str::from_utf8(&process_output.stderr).unwrap();
-    let stdout = std::str::from_utf8(&process_output.stdout).unwrap();
-
-    print!("{}", stderr);
-    print!("{}", stdout);
-
     Ok(())
 }
 
-fn execute_command(mut handle: StdinLock) -> (String, String) {
+fn main() -> io::Result<()> {
+    let handle = if atty::is(Stream::Stdin) {
+        None
+    } else {
+        Some(io::stdin().lock())
+    };
+
     let cmd = std::env::args()
         .skip(1)
         .fold(String::new(), |acc, s| format!("{} {}", acc, s));
@@ -107,18 +107,23 @@ fn execute_command(mut handle: StdinLock) -> (String, String) {
 
     let mut stdin_hasher = DefaultHasher::new();
 
-    loop {
-        match handle.read(&mut buffer) {
-            Ok(0) => break,
-            Ok(read_bytes) => {
-                let read_buf = &buffer[..read_bytes];
-                process.stdin.as_mut().unwrap().write(read_buf).unwrap();
-                stdin_hasher.write(read_buf);
+    let stdin_hash = match handle {
+        Some(mut h) => {
+            loop {
+                match h.read(&mut buffer) {
+                    Ok(0) => break,
+                    Ok(read_bytes) => {
+                        let read_buf = &buffer[..read_bytes];
+                        process.stdin.as_mut().unwrap().write(read_buf).unwrap();
+                        stdin_hasher.write(read_buf);
+                    }
+                    Err(e) => print!("{}", e),
+                };
             }
-            Err(e) => print!("{}", e),
+            stdin_hasher.finish()
         }
-    }
-    let stdin_hash = stdin_hasher.finish();
+        None => 0,
+    };
 
     // TODO: investigate dropping stdin: according to
     // https://stackoverflow.com/questions/49218599/write-to-child-process-stdin-in-rust we might
@@ -147,15 +152,9 @@ fn execute_command(mut handle: StdinLock) -> (String, String) {
     let process_output = process.wait_with_output().unwrap();
     if process_output.status.success() {
         store_output(&process_output, full_cmd_hash).unwrap();
+
+        io::stdout().write_all(&process_output.stderr).unwrap();
+        io::stdout().write_all(&process_output.stdout).unwrap();
     }
-
-    ("".to_string(), "".to_string())
-}
-
-fn main() -> io::Result<()> {
-    let stdin = io::stdin();
-
-    execute_command(stdin.lock());
-
     Ok(())
 }
