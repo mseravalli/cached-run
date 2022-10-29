@@ -28,25 +28,23 @@ impl Entry {
         let mut buffer = [0u8; BUF_SIZE];
 
         loop {
-            match self.stderr_file.read(&mut buffer) {
-                Ok(0) => break,
-                Ok(read_bytes) => {
-                    let read_buf = &buffer[..read_bytes];
-                    io::stdout().write_all(read_buf)?;
-                }
-                Err(e) => print!("{}", e),
+            let read_bytes = self.stderr_file.read(&mut buffer)?;
+            if read_bytes == 0 {
+                break;
+            } else {
+                let read_buf = &buffer[..read_bytes];
+                io::stdout().write_all(read_buf)?;
             }
         }
         // io::stdout().flush()?;
 
         loop {
-            match self.stdout_file.read(&mut buffer) {
-                Ok(0) => break,
-                Ok(read_bytes) => {
-                    let read_buf = &buffer[..read_bytes];
-                    io::stdout().write_all(read_buf)?;
-                }
-                Err(e) => print!("{}", e),
+            let read_bytes = self.stdout_file.read(&mut buffer)?;
+            if read_bytes == 0 {
+                break;
+            } else {
+                let read_buf = &buffer[..read_bytes];
+                io::stdout().write_all(read_buf)?;
             }
         }
         // io::stdout().flush()?;
@@ -134,15 +132,15 @@ fn main() -> io::Result<()> {
 
     if let Some(mut h) = handle {
         loop {
-            match h.read(&mut buffer) {
-                Ok(0) => break,
-                Ok(read_bytes) => {
-                    let read_buf = &buffer[..read_bytes];
-                    process.stdin.as_mut().unwrap().write_all(read_buf)?;
-                    hasher.write(read_buf);
-                }
-                Err(e) => print!("{}", e),
-            };
+            let read_bytes = h.read(&mut buffer)?;
+
+            if read_bytes == 0 {
+                break;
+            } else {
+                let read_buf = &buffer[..read_bytes];
+                process.stdin.as_mut().unwrap().write_all(read_buf)?;
+                hasher.write(read_buf);
+            }
         }
     }
 
@@ -156,7 +154,6 @@ fn main() -> io::Result<()> {
 
     if use_cache {
         if let Some(mut entry) = cache.get(full_cmd_hash)? {
-            // println!("Command was already executed!");
             process.kill()?;
             entry.write_to_stderr_stdout()?;
         };
