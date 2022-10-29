@@ -111,9 +111,10 @@ fn main() -> io::Result<()> {
 
     let args: Vec<String> = std::env::args().collect();
 
-    let is_force_enabled = args.get(1).map(|x| *x == "-f").unwrap_or(false);
+    let force_running_command = args.get(1).map(|x| *x == "-f").unwrap_or(false);
+    let use_cache = !force_running_command;
 
-    let args_to_skip = if is_force_enabled { 2 } else { 1 };
+    let args_to_skip = if force_running_command { 2 } else { 1 };
 
     let cmd = std::env::args()
         .skip(args_to_skip)
@@ -152,7 +153,8 @@ fn main() -> io::Result<()> {
     let full_cmd_hash = hasher.finish();
 
     let cache = Cache::new();
-    if !is_force_enabled {
+
+    if use_cache {
         if let Some(mut entry) = cache.get(full_cmd_hash)? {
             // println!("Command was already executed!");
             process.kill()?;
