@@ -9,6 +9,8 @@ use std::process::Command;
 use std::process::Output;
 use std::process::Stdio;
 
+const BUF_SIZE: usize = 2 << 13; // 8 KiB
+
 struct Entry {
     stderr_file: File,
     stdout_file: File,
@@ -23,7 +25,6 @@ impl Entry {
     }
 
     pub fn write_to_stderr_stdout(&mut self) -> io::Result<()> {
-        const BUF_SIZE: usize = 2 << 13; // 8 KiB
         let mut buffer = [0u8; BUF_SIZE];
 
         loop {
@@ -108,10 +109,14 @@ fn main() -> io::Result<()> {
         Some(io::stdin().lock())
     };
 
-    let cache = Cache::new();
+    let args: Vec<String> = std::env::args().collect();
+
+    let is_force_enabled = args.get(1).map(|x| *x == "-f").unwrap_or(false);
+
+    let args_to_skip = if is_force_enabled { 2 } else { 1 };
 
     let cmd = std::env::args()
-        .skip(1)
+        .skip(args_to_skip)
         .fold(String::new(), |acc, s| format!("{} {}", acc, s));
 
     let mut hasher = DefaultHasher::new();
@@ -124,7 +129,6 @@ fn main() -> io::Result<()> {
         .arg(cmd)
         .spawn()?;
 
-    const BUF_SIZE: usize = 2 << 13; // 8 KiB
     let mut buffer = [0u8; BUF_SIZE];
 
     if let Some(mut h) = handle {
@@ -147,11 +151,14 @@ fn main() -> io::Result<()> {
 
     let full_cmd_hash = hasher.finish();
 
-    if let Some(mut entry) = cache.get(full_cmd_hash)? {
-        // println!("Command was already executed!");
-        process.kill()?;
-        entry.write_to_stderr_stdout()?;
-    };
+    let cache = Cache::new();
+    if !is_force_enabled {
+        if let Some(mut entry) = cache.get(full_cmd_hash)? {
+            // println!("Command was already executed!");
+            process.kill()?;
+            entry.write_to_stderr_stdout()?;
+        };
+    }
 
     let process_output = process.wait_with_output()?;
     if process_output.status.success() {
