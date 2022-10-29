@@ -101,7 +101,7 @@ impl Cache {
 }
 
 fn main() -> io::Result<()> {
-    let handle = if atty::is(Stream::Stdin) {
+    let stdin_handle = if atty::is(Stream::Stdin) {
         None
     } else {
         Some(io::stdin().lock())
@@ -130,10 +130,9 @@ fn main() -> io::Result<()> {
 
     let mut buffer = [0u8; BUF_SIZE];
 
-    if let Some(mut h) = handle {
+    if let Some(mut h) = stdin_handle {
         loop {
             let read_bytes = h.read(&mut buffer)?;
-
             if read_bytes == 0 {
                 break;
             } else {
