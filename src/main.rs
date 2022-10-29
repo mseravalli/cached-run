@@ -110,7 +110,7 @@ fn main() -> io::Result<()> {
     let args: Vec<String> = std::env::args().collect();
 
     let force_running_command = args.get(1).map(|x| *x == "-f").unwrap_or(false);
-    let use_cache = !force_running_command;
+    let read_from_cache = !force_running_command;
 
     let args_to_skip = if force_running_command { 2 } else { 1 };
 
@@ -152,7 +152,7 @@ fn main() -> io::Result<()> {
 
     let cache = Cache::new();
 
-    if use_cache {
+    if read_from_cache {
         if let Some(mut entry) = cache.get(full_cmd_hash)? {
             process.kill()?;
             entry.write_to_stderr_stdout()?;
