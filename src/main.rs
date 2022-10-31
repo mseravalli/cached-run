@@ -122,26 +122,18 @@ fn main() -> io::Result<()> {
     let mut hasher = DefaultHasher::new();
     hasher.write(cmd.as_bytes());
 
-    // Use a block to release the lock on stdin
-    {
-        let stdin_handle = if atty::is(Stream::Stdin) {
-            None
-        } else {
-            Some(io::stdin().lock())
-        };
-
-        if let Some(mut h) = stdin_handle {
-            let mut buffer = [0u8; BUF_SIZE];
-            let process_stdin = process.stdin.as_mut().unwrap();
-            loop {
-                let read_bytes = h.read(&mut buffer)?;
-                if read_bytes == 0 {
-                    break;
-                }
-                let read_buf = &buffer[..read_bytes];
-                process_stdin.write_all(read_buf)?;
-                hasher.write(read_buf);
+    if !atty::is(Stream::Stdin) {
+        let mut stdin_handle = io::stdin().lock();
+        let mut buffer = [0u8; BUF_SIZE];
+        let process_stdin = process.stdin.as_mut().unwrap();
+        loop {
+            let read_bytes = stdin_handle.read(&mut buffer)?;
+            if read_bytes == 0 {
+                break;
             }
+            let read_buf = &buffer[..read_bytes];
+            process_stdin.write_all(read_buf)?;
+            hasher.write(read_buf);
         }
     }
 
