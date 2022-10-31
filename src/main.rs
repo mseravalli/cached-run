@@ -101,12 +101,6 @@ impl Cache {
 }
 
 fn main() -> io::Result<()> {
-    let stdin_handle = if atty::is(Stream::Stdin) {
-        None
-    } else {
-        Some(io::stdin().lock())
-    };
-
     let args: Vec<String> = std::env::args().collect();
 
     let force_running_command = args.get(1).map(|x| *x == "-f").unwrap_or(false);
@@ -118,27 +112,35 @@ fn main() -> io::Result<()> {
         .skip(args_to_skip)
         .fold(String::new(), |acc, s| format!("{} {}", acc, s));
 
-    let mut hasher = DefaultHasher::new();
-    hasher.write(cmd.as_bytes());
-
     let mut process = Command::new("sh")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .arg("-c")
-        .arg(cmd)
+        .arg(&cmd)
         .spawn()?;
 
-    let mut buffer = [0u8; BUF_SIZE];
+    let mut hasher = DefaultHasher::new();
+    hasher.write(cmd.as_bytes());
 
-    if let Some(mut h) = stdin_handle {
-        loop {
-            let read_bytes = h.read(&mut buffer)?;
-            if read_bytes == 0 {
-                break;
-            } else {
-                let read_buf = &buffer[..read_bytes];
-                process.stdin.as_mut().unwrap().write_all(read_buf)?;
-                hasher.write(read_buf);
+    // Use a block to release the lock on stdin
+    {
+        let stdin_handle = if atty::is(Stream::Stdin) {
+            None
+        } else {
+            Some(io::stdin().lock())
+        };
+
+        if let Some(mut h) = stdin_handle {
+            let mut buffer = [0u8; BUF_SIZE];
+            loop {
+                let read_bytes = h.read(&mut buffer)?;
+                if read_bytes == 0 {
+                    break;
+                } else {
+                    let read_buf = &buffer[..read_bytes];
+                    process.stdin.as_mut().unwrap().write_all(read_buf)?;
+                    hasher.write(read_buf);
+                }
             }
         }
     }
