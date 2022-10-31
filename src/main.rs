@@ -32,7 +32,7 @@ impl Entry {
                 io::stderr().write_all(read_buf)?;
             }
         }
-        // io::stderr().flush()?;
+        io::stderr().flush()?;
 
         loop {
             let read_bytes = self.stdout_file.read(&mut buffer)?;
@@ -43,7 +43,7 @@ impl Entry {
                 io::stdout().write_all(read_buf)?;
             }
         }
-        // io::stdout().flush()?;
+        io::stdout().flush()?;
 
         Ok(())
     }
@@ -85,12 +85,12 @@ impl Cache {
         let stderr_filename = format!("{}{:x}.stderr", self.prefix, full_cmd_hash);
         let mut stderr_chache = File::create(stderr_filename)?;
         stderr_chache.write_all(&process_output.stderr)?;
-        // stderr_chache.flush()?;
+        stderr_chache.flush()?;
 
         let stdout_filename = format!("{}{:x}.stdout", self.prefix, full_cmd_hash);
         let mut stdout_chache = File::create(stdout_filename)?;
         stdout_chache.write_all(&process_output.stdout)?;
-        // stdout_chache.flush()?;
+        stdout_chache.flush()?;
 
         Ok(())
     }
