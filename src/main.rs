@@ -33,10 +33,10 @@ impl Entry {
                 break;
             } else {
                 let read_buf = &buffer[..read_bytes];
-                io::stdout().write_all(read_buf)?;
+                io::stderr().write_all(read_buf)?;
             }
         }
-        // io::stdout().flush()?;
+        // io::stderr().flush()?;
 
         loop {
             let read_bytes = self.stdout_file.read(&mut buffer)?;
@@ -160,7 +160,7 @@ fn main() -> io::Result<()> {
     if process_output.status.success() {
         cache.insert(&process_output, full_cmd_hash)?;
 
-        io::stdout().write_all(&process_output.stderr)?;
+        io::stderr().write_all(&process_output.stderr)?;
         io::stdout().write_all(&process_output.stdout)?;
     }
     Ok(())
