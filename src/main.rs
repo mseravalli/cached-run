@@ -1,13 +1,9 @@
-use atty::Stream;
 use std::collections::hash_map::DefaultHasher;
 use std::fs::File;
 use std::hash::Hasher;
 use std::io;
-use std::io::Read;
-use std::io::Write;
-use std::process::Command;
-use std::process::Output;
-use std::process::Stdio;
+use std::io::{Read, Write};
+use std::process::{Command, Output, Stdio};
 
 const BUF_SIZE: usize = 2 << 13; // 8 KiB
 
@@ -122,7 +118,7 @@ fn main() -> io::Result<()> {
     let mut hasher = DefaultHasher::new();
     hasher.write(cmd.as_bytes());
 
-    if !atty::is(Stream::Stdin) {
+    if !atty::is(atty::Stream::Stdin) {
         let mut stdin_handle = io::stdin().lock();
         let mut buffer = [0u8; BUF_SIZE];
         let process_stdin = process.stdin.as_mut().unwrap();
