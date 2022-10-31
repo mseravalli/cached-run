@@ -132,22 +132,18 @@ fn main() -> io::Result<()> {
 
         if let Some(mut h) = stdin_handle {
             let mut buffer = [0u8; BUF_SIZE];
+            let process_stdin = process.stdin.as_mut().unwrap();
             loop {
                 let read_bytes = h.read(&mut buffer)?;
                 if read_bytes == 0 {
                     break;
-                } else {
-                    let read_buf = &buffer[..read_bytes];
-                    process.stdin.as_mut().unwrap().write_all(read_buf)?;
-                    hasher.write(read_buf);
                 }
+                let read_buf = &buffer[..read_bytes];
+                process_stdin.write_all(read_buf)?;
+                hasher.write(read_buf);
             }
         }
     }
-
-    // TODO: investigate dropping stdin: according to
-    // https://stackoverflow.com/questions/49218599/write-to-child-process-stdin-in-rust we might
-    // nedd to drop stdin
 
     let full_cmd_hash = hasher.finish();
 
