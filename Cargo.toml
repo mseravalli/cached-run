@@ -1,6 +1,6 @@
 [package]
 name = "cached-run"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license = "Apache-2.0"
 description = "Stores and resuses the result of a command."
