@@ -2,8 +2,9 @@
 name = "cached-run"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+license = "Apache-2.0"
+description = "Stores and resuses the result of a command."
+categories = "command-line-utilities"
 
 [dependencies]
 dirs = "4.0"
