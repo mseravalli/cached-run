@@ -8,6 +8,11 @@ documentation = "https://gitlab.com/com.marcoseravalli/cached-run"
 repository = "https://gitlab.com/com.marcoseravalli/cached-run"
 categories = ["command-line-utilities"]
 
+[[bin]]
+bench = false
+path = "src/main.rs"
+name = "caru"
+
 [dependencies]
 dirs = "4.0"
 atty = "0.2"
