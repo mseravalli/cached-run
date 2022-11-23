@@ -4,7 +4,9 @@ version = "0.1.0"
 edition = "2021"
 license = "Apache-2.0"
 description = "Stores and resuses the result of a command."
-categories = "command-line-utilities"
+documentation = "https://gitlab.com/com.marcoseravalli/cached-run"
+repository = "https://gitlab.com/com.marcoseravalli/cached-run"
+categories = ["command-line-utilities"]
 
 [dependencies]
 dirs = "4.0"
