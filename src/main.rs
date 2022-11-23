@@ -1,4 +1,5 @@
 use std::collections::hash_map::DefaultHasher;
+use std::fs;
 use std::fs::File;
 use std::hash::Hasher;
 use std::io;
@@ -55,9 +56,9 @@ struct Cache {
 
 impl Cache {
     pub fn new() -> Self {
-        Self {
-            prefix: format!("{}/.caru/", dirs::home_dir().unwrap().to_str().unwrap()),
-        }
+        let prefix = format!("{}/.caru/", dirs::home_dir().unwrap().to_str().unwrap());
+        fs::create_dir_all(&prefix).unwrap();
+        Self { prefix }
     }
 
     fn try_get_stderr_stout_files(&self, entry_hash: u64) -> io::Result<(File, File)> {
