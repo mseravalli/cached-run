@@ -6,7 +6,7 @@ use std::io;
 use std::io::{Read, Write};
 use std::process::{Command, Output, Stdio};
 
-const BUF_SIZE: usize = 2 << 13; // 8 KiB
+const BUF_SIZE: usize = 1 << 13; // 8 KiB
 
 struct Entry {
     stderr_file: File,
